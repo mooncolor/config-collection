@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+		  http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         version="2.5">
+
+    <welcome-file-list>
+        <welcome-file>/nav/index.jsp</welcome-file>
+    </welcome-file-list>
+
+    <!-- shiro配置 -->
+    <filter>
+        <filter-name>shiroFilter</filter-name>
+        <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+        <init-param>
+            <param-name>targetFilterLifecycle</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>shiroFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- 编码的过滤器 -->
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>adminLoginFilter</filter-name>
+        <filter-class>com.cms.kernel.filter.AdminLoginFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>adminLoginFilter</filter-name>
+        <url-pattern>*.jsp</url-pattern>
+    </filter-mapping>
+
+    <!--<filter>-->
+        <!--<filter-name>frontAuthorityFilter</filter-name>-->
+        <!--<filter-class>com.cms.kernel.filter.FrontAuthorityFilter</filter-class>-->
+        <!--<init-param>-->
+            <!--<param-name>authority</param-name>-->
+            <!--<param-value>com/config/authority.properties</param-value>-->
+        <!--</init-param>-->
+        <!--&lt;!&ndash;<init-param>&ndash;&gt;-->
+            <!--&lt;!&ndash;<param-name>yscfp_index.jsp</param-name>&ndash;&gt;-->
+            <!--&lt;!&ndash;<param-value>yscfp</param-value>&ndash;&gt;-->
+        <!--&lt;!&ndash;</init-param>&ndash;&gt;-->
+    <!--</filter>-->
+    <!--<filter-mapping>-->
+        <!--<filter-name>frontAuthorityFilter</filter-name>-->
+        <!--<url-pattern>/front/module/*</url-pattern>-->
+    <!--</filter-mapping>-->
+
+    <!-- log4j2文件的配置 -->
+    <context-param>
+        <param-name>log4jConfiguration</param-name>
+        <param-value>classpath:com/config/log4j2.xml</param-value>
+    </context-param>
+    <!-- log4j2的监听器 -->
+    <listener>
+        <listener-class>org.apache.logging.log4j.web.Log4jServletContextListener</listener-class>
+    </listener>
+    <!-- log4j2的过滤器 -->
+    <!--<filter>
+        <filter-name>log4j2ServletFilter</filter-name>
+        <filter-class>org.apache.logging.log4j.web.Log4jServletFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>log4j2ServletFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+        <dispatcher>FORWARD</dispatcher>
+        <dispatcher>INCLUDE</dispatcher>
+        <dispatcher>ERROR</dispatcher>
+    </filter-mapping>-->
+
+    <!--
+        spring文件的配置
+    -->
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>
+            classpath:com/config/spring.xml,classpath:com/config/springMVC.xml
+        </param-value>
+    </context-param>
+    <context-param>
+        <param-name>webAppRootKey</param-name>
+        <param-value>CKBGDDYXT</param-value>
+    </context-param>
+
+    <!-- spring MVC 的配置 -->
+    <servlet>
+        <servlet-name>springMVC</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>
+                classpath:com/config/springMVC.xml,
+                classpath:com/config/timer-task.xml
+            </param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>springMVC</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+    <!-- spring MVC的监听器 -->
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <!-- 设置session的超时时间（单位为分钟） -->
+    <session-config>
+        <session-timeout>60</session-timeout>
+    </session-config>
+
+    <!-- 403错误页面 -->
+    <error-page>
+        <error-code>403</error-code>
+        <location>/common/html/403.html</location>
+    </error-page>
+    <!-- 404错误页面 -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/common/404/404.html</location>
+    </error-page>
+    <!-- 405错误页面 -->
+    <error-page>
+        <error-code>405</error-code>
+        <location>/common/404/404.html</location>
+    </error-page>
+    <!-- 500错误页面 -->
+    <error-page>
+        <error-code>500</error-code>
+        <location>/common/404/404.html</location>
+    </error-page>
+    <!-- 403错误页面 -->
+    <error-page>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/common/404/404.html</location>
+    </error-page>
+
+    <servlet>
+        <servlet-name>DruidStatView</servlet-name>
+        <servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>
+        <init-param>
+            <!-- 允许清空统计数据 -->
+            <param-name>resetEnable</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <init-param>
+            <!-- 用户名 -->
+            <param-name>loginUsername</param-name>
+            <param-value>admin</param-value>
+        </init-param>
+        <init-param>
+            <!-- 密码 -->
+            <param-name>loginPassword</param-name>
+            <param-value>njsky8481</param-value>
+        </init-param>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DruidStatView</servlet-name>
+        <url-pattern>/druid/*</url-pattern>
+    </servlet-mapping>
+    <filter>
+        <filter-name>druidWebStatFilter</filter-name>
+        <filter-class>com.alibaba.druid.support.http.WebStatFilter</filter-class>
+        <init-param>
+            <param-name>exclusions</param-name>
+            <param-value>/public/*,*.js,*.css,/druid*,*.jsp,*.swf</param-value>
+        </init-param>
+        <init-param>
+            <param-name>principalSessionName</param-name>
+            <param-value>sessionInfo</param-value>
+        </init-param>
+        <init-param>
+            <param-name>profileEnable</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>druidWebStatFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+</web-app>

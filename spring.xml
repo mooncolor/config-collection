@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:tx="http://www.springframework.org/schema/tx"
+        xmlns:aop="http://www.springframework.org/schema/aop" xmlns:util="http://www.springframework.org/schema/util"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/tx
+	http://www.springframework.org/schema/tx/spring-tx.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+    <!-- 数据源
+    <context:property-placeholder location="classpath:com/config/jdbc.properties" />
+    <bean id="dataSource" destroy-method="close" class="org.apache.commons.dbcp2.BasicDataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}" />
+        <property name="url" value="${jdbc.databaseurl}" />
+        <property name="username" value="${jdbc.username}" />
+        <property name="password" value="${jdbc.password}" />
+    </bean>-->
+
+    <!-- 数据源 -->
+    <context:property-placeholder location="classpath:com/config/jdbc.properties" />
+    <bean id="dataSource" destroy-method="close" class="com.alibaba.druid.pool.DruidDataSource" init-method="init">
+        <property name="driverClassName" value="${jdbc.driverClassName}" />
+        <property name="url" value="${jdbc.databaseurl}" />
+        <property name="username" value="${jdbc.username}" />
+        <property name="password" value="${jdbc.password}" />
+        <!-- 配置初始化大小、最小、最大 -->
+        <property name="initialSize" value="1" />
+        <property name="minIdle" value="1" />
+        <property name="maxActive" value="10" />
+        <!-- 配置获取连接等待超时的时间 -->
+        <property name="maxWait" value="60000" />
+        <!-- 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒 -->
+        <property name="timeBetweenEvictionRunsMillis" value="30000" />
+        <!-- 配置一个连接在池中最小生存的时间，单位是毫秒 -->
+        <property name="minEvictableIdleTimeMillis" value="300000" />
+        <property name="testWhileIdle" value="true" />
+        <!-- 这里建议配置为TRUE，防止取到的连接不可用 -->
+        <property name="testOnBorrow" value="true" />
+        <property name="testOnReturn" value="false" />
+        <!-- 打开PSCache，并且指定每个连接上PSCache的大小 -->
+        <property name="poolPreparedStatements" value="true" />
+        <property name="maxPoolPreparedStatementPerConnectionSize"
+                  value="20" />
+        <!-- 链接使用超过时间限制是否回收 -->
+        <property name="removeAbandoned" value="true" />
+         <!-- 超过时间限制时间（单位秒），目前为5分钟，如果有业务处理时间超过5分钟，可以适当调整。 -->
+         <property name="removeAbandonedTimeout" value="600" />
+        <!-- #链接回收的时候控制台打印信息，测试环境可以加上true，线上环境false。会影响性能。 -->
+        <property name="logAbandoned" value="false" />
+        <!-- 这里配置提交方式，默认就是TRUE，可以不用配置 -->
+        <property name="defaultAutoCommit" value="true" />
+        <!-- 验证连接有效与否的SQL，不同的数据配置不同 -->
+        <property name="validationQuery" value="select 1 " />
+        <property name="filters" value="stat" />
+        <property name="proxyFilters">
+            <list>
+                <ref bean="logFilter" />
+                <ref bean="statfilter"/>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 慢SQL记录  -->
+        <bean id="statfilter" class="com.alibaba.druid.filter.stat.StatFilter">
+           <!-- 开启合并sql -->
+           <property name="mergeSql" value="true" />
+        <!-- 开启慢查询语句,200毫秒 -->
+           <property name="slowSqlMillis" value="1000" />
+            <property name="logSlowSql" value="true" />
+        </bean>
+
+    <bean id="logFilter" class="com.alibaba.druid.filter.logging.Log4j2Filter">
+        <property name="connectionLogEnabled" value="false"/>
+        <!-- 所有Statement相关的日志 -->
+        <property name="statementLogEnabled" value="false"/>
+        <!-- 是否显示结果集 -->
+        <property name="resultSetLogEnabled" value="true"/>
+        <!-- 是否显示SQL语句 -->
+        <property name="statementExecutableSqlLogEnable" value="true"/>
+    </bean>
+
+    <!-- sql会话工厂 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="configLocation" value="classpath:com/config/mybatis.xml"/>
+        <property name="typeAliasesPackage" value="com.com.cms.kernel.entity"/>
+    </bean>
+
+
+    <!-- sql会话模板 -->
+    <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sqlSessionFactory" />
+    </bean>
+
+
+    <!-- 事务 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+
+    <!-- 上下文注解配置-->
+    <context:annotation-config />
+
+    <aop:config proxy-target-class="true"/>
+
+    <!-- 切面代理 -->
+    <aop:aspectj-autoproxy />
+    <!-- 切面配置 -->
+    <!--<aop:config>-->
+        <!--<aop:advisor advice-ref="txAdvice" pointcut="execution(* com.cms..service.*Service*.*(..))" />-->
+    <!--</aop:config>-->
+
+    <!-- 注解配置事务 -->
+    <tx:annotation-driven transaction-manager="transactionManager" />
+
+    <!-- 配置mybatis通用mapper -->
+    <bean class="tk.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.cms.**.mapper" />
+        <!--<property name="markerInterface" value="tk.mybatis.mapper.common.Mapper" />-->
+        <property name="sqlSessionTemplateBeanName" value="sqlSessionTemplate" />
+    </bean>
+
+
+    <!-- 文件上传 -->
+    <!--<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">-->
+        <!--<property name="maxUploadSize" value="10240000" />-->
+    <!--</bean>-->
+    <bean id="multipartResolver" class="com.cms.kernel.util.MyMultipartResolver">
+        <property name="maxUploadSize" value="10240000" />
+        <!--<property name="excludeUrls" value="/front/Ckwts/uploadBg" ></property>-->
+        <property name="excludeUrls" value="/admin/ckwtsgl/uploadBg"></property>
+    </bean>
+
+    <!-- spring-ehcache缓存管理工厂 -->
+    <bean id="ehcacheManagerFactory" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean">
+        <property name="configLocation" value="classpath:com/config/ehcache.xml" />
+    </bean>
+
+    <!--注入缓存的bean-->
+    <bean id="memcachedCache" class="com.cms.kernel.memcache.MemcachedCache"></bean>
+
+    <!--******************************************************** shrio start *******************************************-->
+    <!-- shiro生命周期处理器 -->
+    <bean id="lifecycleBeanPostProcessor" class="org.apache.shiro.spring.LifecycleBeanPostProcessor" />
+    <!-- shiro的密码加密处理 -->
+    <bean id="passwordService" class="org.apache.shiro.authc.credential.DefaultPasswordService">
+        <property name="hashService">
+            <bean class="org.apache.shiro.crypto.hash.DefaultHashService">
+                <property name="hashAlgorithmName" value="MD5" />
+            </bean>
+        </property>
+    </bean>
+    <!-- 自定义userRealm继承AuthorizingRealm -->
+    <bean id="userRealm" class="com.cms.kernel.realm.UserRealm">
+        <!-- 密码的验证方式 -->
+        <property name="credentialsMatcher">
+            <bean class="com.cms.kernel.credentials.LoginCredentialsMatcher" />
+        </property>
+        <!--<property name="cachingEnabled" value="false"/>-->
+    </bean>
+    <!-- shiro-ehcache缓存管理 -->
+    <bean id="ehCacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+        <property name="cacheManager" ref="ehcacheManagerFactory" />
+    </bean>
+    <!-- shiro安全管理 -->
+    <bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+        <property name="cacheManager" ref="ehCacheManager" />
+        <property name="realm" ref="userRealm" />
+    </bean>
+    <!-- shiro过滤，id必须和web.xml中的shiro的filter的filter-name一样 -->
+    <bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+        <property name="securityManager" ref="securityManager" />
+        <property name="loginUrl" value="/front/user/login" />
+        <property name="successUrl" value="/nav/index.jsp" />
+        <property name="unauthorizedUrl" value="/common/html/403.html" />
+        <property name="filters">
+            <util:map>
+                <entry key="authc">
+                    <!-- 自定义登录，支持AJAX请求 -->
+                    <bean class="com.cms.kernel.filter.LoginFormAuthenticationFilter" />
+                </entry>
+            </util:map>
+        </property>
+        <!-- 过滤链 -->
+        <property name="filterChainDefinitions">
+            <value>
+                <!--权限和角色的限制配置开始 -->
+
+                /front/fpgxpt/** = anon
+                /yueda/** = anon
+                /nav/local_index.jsp = roles[sn]
+                /front/module/jkzzsjks/jkzzsjks_index.jsp = roles[qx_hgwspzck]
+                /front/module/jkzzsjks/jkzzsjks_sjsb.jsp = roles[qx_hgwspzcz]
+                /front/module/jkzzsjks/jkzzsjks_ysbSj.jsp = roles[qx_hgwspzck]
+                /front/module/kpgj/bgdkp/bgdkp_index.jsp = roles[qx_kpgj_cz,qx_kpgj_ck]
+                /front/module/kpgj/yscfp/yscfp_index.jsp = roles[qx_kpgj_ck]
+                /front/module/jxfp/jxfp.jsp = roles["qx_sbgj,sn"]
+                /front/module/dzbq/dzbq_index.jsp = roles["qx_sbgj,sn"]
+                /front/module/dzqq/dzqq_index.jsp = roles["qx_sbgj,sn"]
+                /front/module/znpd/znpd_index.jsp = roles["qx_sbgj,sn"]
+                /front/module/hwmx/hwmx.jsp = roles["qx_sbgj,sn,sn"]
+                /front/module/bymdt/bymdt_index.jsp = roles["qx_sbgj,sn"]
+                /front/module/ckwtsbg/ckwtsbg_index.jsp = roles[sn]
+                /front/Ckwts/** = roles[sn]
+
+
+
+                /front/module/SmallTools/hlsz_index.jsp = roles[qx_hlcxdc]
+                /front/module/SmallTools/tslcx.jsp = roles[qx_tslcx]
+                /front/module/SmallTools/hhjsq.jsp = roles[qx_hhcbjsq]
+                /front/module/spdmcy/dm_spdmcy.jsp = roles[qx_mkbbcyfx]
+                <!-- -->
+                <!--/front/module/demo/shiro_test.jsp=roles["test1,test2"]   //每个都通过才可以-->
+                <!--/front/module/demo/shrio_demo1.jsp=roles["test"]-->
+                <!--/front/module/demo/test2.jsp=perms["test3"]-->
+                <!--/front/module/demo/test3.jsp=perms["test31"]-->
+                <!--权限和角色的限制配置结束-->
+
+                <!-- 不需要过滤的链接（即不需要授权就能进入的链接） -->
+                /front/hgdzka/**=anon
+                /front/user/checkLogin=anon
+                /front/hgdzka/initValue=anon
+                /front/hgdzka/validateLogin=anon
+                /front/hgdzka/download**=anon
+                /common/**=anon
+                /front/asset/**=anon
+                /front/http.jsp=anon
+                /front/user/insertUser=anon
+                /front/user/getUserByHgCode=anon
+                /front/login.jsp=anon
+                /front/wklogin.jsp=anon
+                /front/register.jsp=anon
+                /tax/rdxx/isOut=anon
+                /admin/**=anon
+                <!--  需要授权才能进入的链接 -->
+                /=authc
+                /front/**=authc
+                /nav/**=authc
+                <!--  注销的链接 -->
+                <!--/front/user/logout=logout-->
+                /front/user/logout=anon
+
+            </value>
+        </property>
+    </bean>
+    <!--******************************************************** shrio end *******************************************-->
+    <context:component-scan base-package="com.cms">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+    </context:component-scan>
+
+</beans>
