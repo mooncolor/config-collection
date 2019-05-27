@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 应用名称：和统一配置中的项目代码保持一致（小写） -->
+
+    <property name="APP_NAME" value="astp"/>
+
+    <!-- secpoint error log -->
+    <property name="ERROR_LOG_FILE_NAME" value="sec-error"/>
+    <property name="ERROR_LOG_LEVEL" value="INFO"/>
+    <!-- secpoint debug log -->
+    <property name="DEBUG_LOG_FILE_NAME" value="sec-debug"/>
+    <property name="DEBUG_LOG_LEVEL" value="DEBUG"/>
+    <!-- app hole info-->
+    <property name="HOLE_INFO" value="hole-info"/>
+    <property name="HOLE_INFO_LEVEL" value="INFO"/>
+
+    <!--日志文件保留天数 -->
+    <property name="LOG_MAX_HISTORY" value="30"/>
+    <!--日志文件最大大小 -->
+    <property name="LOG_MAX_FILE_SIZE" value="50MB"/>
+    <!--定义日志文件的存储地址 勿在 LogBack 的配置中使用相对路径 -->
+    <!--应用日志文件保存路径 -->
+    <property name="LOG_APP_HOME" value="F:\\logs\\"/>
+    <!-- %m输出的信息,%p日志级别,%t线程名,%d日期,%c类的全名,%i索引【从数字0开始递增】,,, -->
+    <!-- appender是configuration的子节点，是负责写日志的组件。 -->
+    <!-- RollingFileAppender：滚动记录文件，先将日志记录到指定文件，当符合某个条件时，将日志记录到其他文件 -->
+    <!-- 以下的大概意思是：1.先按日期存日志，日期变了，将前一天的日志文件名重命名为XXX%日期%索引，新的日志仍然是demo.log -->
+    <!--             2.如果日期没有发生变化，但是当前日志的文件大小超过1KB时，对当前日志进行分割 重命名-->
+
+
+    <!-- sec-point 模块日志配置-->
+    <appender name="ERROR_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_APP_HOME}/${ERROR_LOG_FILE_NAME}.log</File>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_APP_HOME}/${ERROR_LOG_FILE_NAME}.log.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+            <maxFileSize>${LOG_MAX_FILE_SIZE}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder charset="UTF-8">
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss}] %level %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="DEBUG_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_APP_HOME}/${DEBUG_LOG_FILE_NAME}.log</File>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_APP_HOME}/${DEBUG_LOG_FILE_NAME}.log.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+            <maxFileSize>${LOG_MAX_FILE_SIZE}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder charset="UTF-8">
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss}] %level %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <appender name="HOLE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_APP_HOME}/${HOLE_INFO}.log</File>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_APP_HOME}/${HOLE_INFO}.log.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>${LOG_MAX_FILE_SIZE}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder charset="UTF-8">
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss}] %level %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+
+    <logger name="ERROR_LOG" additivity="false" level="${ERROR_LOG_LEVEL}">
+        <appender-ref ref="ERROR_LOG_FILE"/>
+    </logger>
+    <logger name="DEBUG_LOG" additivity="false" level="${DEBUG_LOG_LEVEL}">
+        <appender-ref ref="DEBUG_LOG_FILE"/>
+    </logger>
+
+    <logger name="HOLE_INFO" additivity="false" level="${HOLE_INFO_LEVEL}">
+        <appender-ref ref="HOLE_INFO"/>
+    </logger>
+
+
+    <!-- 控制台输出 -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss}] %level [%thread] %file:%line - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- 按照每天生成日志文件：主项目日志 -->
+    <appender name="APP" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_APP_HOME}/${APP_NAME}.log</File>
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件输出的文件名 -->
+            <FileNamePattern>${LOG_APP_HOME}/${APP_NAME}.log.%d{yyyy-MM-dd}.%i.gz</FileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+            <maxFileSize>${LOG_MAX_FILE_SIZE}</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>${LOG_MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss}] %level [%thread] %file:%line - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <root level="INFO">
+        <appender-ref ref="APP"/>
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
